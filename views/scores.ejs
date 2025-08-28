@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lịch sử điểm - SAP Practice Quiz</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <!-- Header -->
+  <div class="bg-white shadow-sm border-b">
+    <div class="max-w-4xl mx-auto px-4 py-3 sm:px-6">
+      <div class="flex items-center justify-between">
+        <h1 class="text-lg sm:text-xl font-bold text-gray-900">📊 Lịch sử điểm</h1>
+        <a href="/" class="text-blue-600 hover:text-blue-800 text-sm font-medium">← Về trang chủ</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="max-w-4xl mx-auto px-4 py-6 sm:px-6">
+    <!-- User Info -->
+    <div class="bg-white rounded-xl shadow-sm border p-6 mb-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-xl font-bold text-gray-800 mb-2">Thống kê cá nhân</h2>
+          <p class="text-gray-600" id="userDisplay">Đang tải...</p>
+        </div>
+        <div class="grid grid-cols-3 gap-4 text-center">
+          <div class="p-3 bg-blue-50 rounded-lg">
+            <div class="text-2xl font-bold text-blue-600" id="totalTests">0</div>
+            <div class="text-xs text-blue-500">Bài đã làm</div>
+          </div>
+          <div class="p-3 bg-green-50 rounded-lg">
+            <div class="text-2xl font-bold text-green-600" id="avgScore">0%</div>
+            <div class="text-xs text-green-500">Điểm TB</div>
+          </div>
+          <div class="p-3 bg-purple-50 rounded-lg">
+            <div class="text-2xl font-bold text-purple-600" id="bestScore">0%</div>
+            <div class="text-xs text-purple-500">Điểm cao nhất</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Score History -->
+    <div class="bg-white rounded-xl shadow-sm border">
+      <div class="p-6 border-b">
+        <h3 class="text-lg font-bold text-gray-800">Lịch sử bài thi</h3>
+      </div>
+      <div id="scoresContainer" class="divide-y">
+        <div class="p-6 text-center text-gray-500">
+          <div class="text-4xl mb-2">⏳</div>
+          <p>Đang tải lịch sử...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function loadScores() {
+      const username = localStorage.getItem('quiz_username');
+      
+      if (!username) {
+        document.getElementById('userDisplay').textContent = 'Vui lòng đăng nhập để xem lịch sử';
+        document.getElementById('scoresContainer').innerHTML = `
+          <div class="p-6 text-center text-gray-500">
+            <div class="text-4xl mb-2">👤</div>
+            <p>Vui lòng <a href="/" class="text-blue-600 hover:underline">đăng nhập</a> để xem lịch sử điểm</p>
+          </div>
+        `;
+        return;
+      }
+
+      try {
+        const response = await fetch(`/scores/${username}`);
+        const scores = await response.json();
+        
+        document.getElementById('userDisplay').textContent = `Người dùng: ${username}`;
+        
+        if (scores.length === 0) {
+          document.getElementById('scoresContainer').innerHTML = `
+            <div class="p-6 text-center text-gray-500">
+              <div class="text-4xl mb-2">📝</div>
+              <p>Chưa có bài thi nào. <a href="/" class="text-blue-600 hover:underline">Bắt đầu làm bài</a>!</p>
+            </div>
+          `;
+          return;
+        }
+
+        // Update statistics
+        const totalTests = scores.length;
+        const avgScore = Math.round(scores.reduce((sum, s) => sum + s.percentage, 0) / totalTests);
+        const bestScore = Math.max(...scores.map(s => s.percentage));
+        
+        document.getElementById('totalTests').textContent = totalTests;
+        document.getElementById('avgScore').textContent = avgScore + '%';
+        document.getElementById('bestScore').textContent = bestScore + '%';
+
+        // Render scores
+        const scoresHtml = scores.map(score => `
+          <div class="p-6 hover:bg-gray-50 transition-colors">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-4">
+                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                  <span class="font-bold text-blue-600">${score.examId}</span>
+                </div>
+                <div>
+                  <div class="font-medium text-gray-800">Đề ${score.examId}</div>
+                  <div class="text-sm text-gray-500">${score.date}</div>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-lg font-bold ${score.percentage >= 80 ? 'text-green-600' : score.percentage >= 60 ? 'text-yellow-600' : 'text-red-600'}">
+                  ${score.score}/${score.totalQuestions} (${score.percentage}%)
+                </div>
+                <div class="text-sm text-gray-500">
+                  ${score.timeSpent ? Math.floor(score.timeSpent / 60) + ':' + String(score.timeSpent % 60).padStart(2, '0') : 'N/A'}
+                </div>
+              </div>
+            </div>
+          </div>
+        `).join('');
+
+        document.getElementById('scoresContainer').innerHTML = scoresHtml;
+        
+      } catch (error) {
+        console.error('Error loading scores:', error);
+        document.getElementById('scoresContainer').innerHTML = `
+          <div class="p-6 text-center text-red-500">
+            <div class="text-4xl mb-2">❌</div>
+            <p>Lỗi khi tải lịch sử điểm</p>
+          </div>
+        `;
+      }
+    }
+
+    // Load scores on page load
+    document.addEventListener('DOMContentLoaded', loadScores);
+  </script>
+</body>
+</html>

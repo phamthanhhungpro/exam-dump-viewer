@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz <%= examId %></title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @media (max-width: 640px) {
+      .question-card {
+        margin: 0 -1rem;
+        border-radius: 0;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <!-- Header -->
+  <div class="bg-white shadow-sm border-b sticky top-0 z-10">
+    <div class="max-w-4xl mx-auto px-4 py-3 sm:px-6">
+      <div class="flex items-center justify-between">
+        <h1 class="text-lg sm:text-xl font-bold text-gray-900">Đề <%= examId %></h1>
+        <a href="/" class="text-blue-600 hover:text-blue-800 text-sm font-medium">← Quay lại</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="max-w-4xl mx-auto px-4 py-4 sm:px-6 pb-20">
+    <form id="quizForm" class="space-y-4">
+      <% questions.forEach((q, idx) => { %>
+        <div class="question-card bg-white rounded-lg shadow-sm border p-4 sm:p-6">
+          <!-- Question Header -->
+          <div class="flex items-start justify-between mb-4">
+            <div class="flex-1 pr-3">
+              <div class="flex items-center mb-2">
+                <span class="inline-flex items-center justify-center w-6 h-6 bg-blue-100 text-blue-800 text-xs font-medium rounded-full mr-2">
+                  <%= idx+1 %>
+                </span>
+                <span class="text-xs text-gray-500 font-medium">CÂU <%= idx+1 %></span>
+              </div>
+              <% 
+                let questionText = q.question;
+                let questionNumber = '';
+                
+                // Tách phần "Question #XXX Topic Y" ra khỏi câu hỏi
+                const questionPattern = /^(Question\s*#?\d+\s*Topic\s*\d+)\s*(.*)$/;
+                const match = questionText.match(questionPattern);
+                
+                if (match) {
+                  questionNumber = match[1];
+                  questionText = match[2];
+                }
+              %>
+              <% if (questionNumber) { %>
+                <div class="text-xs text-blue-600 font-medium mb-2 bg-blue-50 px-2 py-1 rounded inline-block">
+                  <%= questionNumber %>
+                </div>
+              <% } %>
+              <p class="text-gray-900 font-medium text-base leading-relaxed"><%= questionText %></p>
+            </div>
+            <div class="flex-shrink-0 flex gap-2">
+              <% if (typeof isStarredPage !== 'undefined' && isStarredPage) { %>
+                <button type="button" onclick="unstarQuestion(this)" 
+                        data-question-text="<%= q.question %>"
+                        class="text-red-500 hover:text-red-700 text-sm px-2 py-1 bg-red-50 hover:bg-red-100 rounded transition-colors border border-red-200">
+                  🗑️ Bỏ đánh dấu
+                </button>
+              <% } else { %>
+                <button type="button" onclick="toggleStar(this)" 
+                        data-question-index="<%= idx %>"
+                        class="text-gray-400 hover:text-yellow-500 text-xl p-1 transition-colors">☆</button>
+              <% } %>
+            </div>
+          </div>
+          
+          <!-- Options -->
+          <div class="space-y-3">
+            <% if (q.is_multiple_choice) { %>
+              <div class="text-sm text-amber-600 font-medium mb-3 bg-amber-50 px-3 py-2 rounded-lg border border-amber-200">
+                ⚠️ Câu hỏi nhiều lựa chọn - Chọn <%= Array.isArray(q.answer) ? q.answer.length : 'nhiều' %> đáp án
+              </div>
+            <% } %>
+            <% q.options.forEach((opt, j) => { %>
+              <label id="q<%= idx %>-opt<%= j %>" 
+                     class="flex items-start space-x-3 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 group">
+                <% if (q.is_multiple_choice) { %>
+                  <input type="checkbox" name="q<%= idx %>" value="<%= j %>"
+                         class="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2">
+                <% } else { %>
+                  <input type="radio" name="q<%= idx %>" value="<%= j %>"
+                         class="mt-1 w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 focus:ring-2">
+                <% } %>
+                <div class="flex-1">
+                  <div class="flex items-center">
+                    <span class="inline-flex items-center justify-center w-6 h-6 bg-gray-100 text-gray-600 text-xs font-medium rounded-full mr-2 group-hover:bg-blue-100 group-hover:text-blue-700 transition-colors">
+                      <%= String.fromCharCode(65 + j) %>
+                    </span>
+                    <span class="text-gray-800 text-sm leading-relaxed"><%= opt %></span>
+                  </div>
+                </div>
+              </label>
+            <% }) %>
+          </div>
+        </div>
+      <% }) %>
+    </form>
+  </div>
+
+  <!-- Fixed Bottom Bar -->
+  <div class="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-20">
+    <div class="max-w-4xl mx-auto px-4 py-3 sm:px-6">
+      <div class="flex gap-3">
+        <button type="button" onclick="submitQuiz()" 
+                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-medium text-sm transition-colors">
+          🎯 Nộp bài
+        </button>
+        <button type="button" onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
+                class="bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-4 rounded-lg transition-colors">
+          ↑
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Result Modal -->
+  <div id="resultModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl p-6 max-w-sm w-full shadow-xl">
+      <div class="text-center">
+        <div class="text-4xl mb-4">🎯</div>
+        <h3 class="text-lg font-bold text-gray-900 mb-2">Kết quả bài thi</h3>
+        <div id="resultContent" class="text-2xl font-bold text-blue-600 mb-4"></div>
+        <div id="resultPercentage" class="text-sm text-gray-600 mb-6"></div>
+        <button onclick="closeResult()" 
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors">
+          Đóng
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="application/json" id="questionsData"><%- JSON.stringify(questions) %></script>
+  <script type="application/json" id="examData"><%- JSON.stringify({examId: examId, isStarredPage: typeof isStarredPage !== 'undefined' && isStarredPage}) %></script>
+  <script>
+    // render sẵn mảng câu hỏi xuống client
+    const questions = JSON.parse(document.getElementById('questionsData').textContent);
+    const examData = JSON.parse(document.getElementById('examData').textContent);
+    let startTime = Date.now();
+
+    function submitQuiz() {
+      let score = 0;
+      let totalQuestions = questions.length;
+      
+      // Disable submit button
+      const submitBtn = document.querySelector('button[onclick="submitQuiz()"]');
+      submitBtn.disabled = true;
+      submitBtn.textContent = '⏳ Đang chấm...';
+      
+      questions.forEach((q, i) => {
+        let isCorrect = false;
+        
+        if (q.is_multiple_choice) {
+          // Handle multiple choice questions
+          const selectedCheckboxes = document.querySelectorAll(`input[name="q${i}"]:checked`);
+          const selectedValues = Array.from(selectedCheckboxes).map(cb => parseInt(cb.value));
+          const correctAnswers = Array.isArray(q.answer) ? q.answer : [q.answer];
+          
+          // Check if selected answers match correct answers exactly
+          isCorrect = selectedValues.length === correctAnswers.length && 
+                     selectedValues.every(val => correctAnswers.includes(val)) &&
+                     correctAnswers.every(val => selectedValues.includes(val));
+          
+          // Style the options
+          q.options.forEach((opt, j) => {
+            const optionElement = document.getElementById(`q${i}-opt${j}`);
+            const isSelected = selectedValues.includes(j);
+            const isCorrectAnswer = correctAnswers.includes(j);
+            
+            if (isCorrectAnswer) {
+              optionElement.classList.remove("border-gray-200", "hover:border-blue-300");
+              optionElement.classList.add("border-green-500", "bg-green-50");
+              optionElement.querySelector('span:first-child').classList.add("bg-green-100", "text-green-700");
+            } else if (isSelected) {
+              optionElement.classList.remove("border-gray-200", "hover:border-blue-300");
+              optionElement.classList.add("border-red-500", "bg-red-50");
+              optionElement.querySelector('span:first-child').classList.add("bg-red-100", "text-red-700");
+            }
+          });
+          
+        } else {
+          // Handle single choice questions
+          const selected = document.querySelector(`input[name="q${i}"]:checked`);
+          const correctAnswer = Array.isArray(q.answer) ? q.answer[0] : q.answer;
+          
+          if (selected) {
+            const chosen = parseInt(selected.value);
+            isCorrect = chosen === correctAnswer;
+            
+            if (isCorrect) {
+              // Correct answer styling
+              document.getElementById(`q${i}-opt${correctAnswer}`).classList.remove("border-gray-200", "hover:border-blue-300");
+              document.getElementById(`q${i}-opt${correctAnswer}`).classList.add("border-green-500", "bg-green-50");
+              document.getElementById(`q${i}-opt${correctAnswer}`).querySelector('span:first-child').classList.add("bg-green-100", "text-green-700");
+            } else {
+              // Wrong answer styling
+              document.getElementById(`q${i}-opt${chosen}`).classList.remove("border-gray-200", "hover:border-blue-300");
+              document.getElementById(`q${i}-opt${chosen}`).classList.add("border-red-500", "bg-red-50");
+              document.getElementById(`q${i}-opt${chosen}`).querySelector('span:first-child').classList.add("bg-red-100", "text-red-700");
+              
+              // Correct answer styling
+              document.getElementById(`q${i}-opt${correctAnswer}`).classList.remove("border-gray-200", "hover:border-blue-300");
+              document.getElementById(`q${i}-opt${correctAnswer}`).classList.add("border-green-500", "bg-green-50");
+              document.getElementById(`q${i}-opt${correctAnswer}`).querySelector('span:first-child').classList.add("bg-green-100", "text-green-700");
+            }
+          } else {
+            // No answer selected - highlight correct answer
+            document.getElementById(`q${i}-opt${correctAnswer}`).classList.remove("border-gray-200", "hover:border-blue-300");
+            document.getElementById(`q${i}-opt${correctAnswer}`).classList.add("border-green-500", "bg-green-50");
+            document.getElementById(`q${i}-opt${correctAnswer}`).querySelector('span:first-child').classList.add("bg-green-100", "text-green-700");
+          }
+        }
+        
+        if (isCorrect) {
+          score++;
+        }
+        
+        // Disable all inputs for this question
+        if (q.is_multiple_choice) {
+          document.querySelectorAll(`input[name="q${i}"]`).forEach(checkbox => {
+            checkbox.disabled = true;
+          });
+        } else {
+          document.querySelectorAll(`input[name="q${i}"]`).forEach(radio => {
+            radio.disabled = true;
+          });
+        }
+      });
+      
+      // Show result modal
+      const percentage = Math.round((score / totalQuestions) * 100);
+      const timeSpent = Math.round((Date.now() - startTime) / 1000); // seconds
+      
+      document.getElementById("resultContent").textContent = `${score}/${totalQuestions}`;
+      document.getElementById("resultPercentage").textContent = `Điểm: ${percentage}% ${getResultMessage(percentage)}`;
+      document.getElementById("resultModal").classList.remove("hidden");
+      
+      // Save score if user is logged in and not starred page
+      if (!examData.isStarredPage) {
+        saveScore(score, totalQuestions, percentage, timeSpent);
+      }
+      
+      // Scroll to top
+      window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+    
+    function getResultMessage(percentage) {
+      if (percentage >= 90) return "🏆 Xuất sắc!";
+      if (percentage >= 80) return "🎉 Tốt!";
+      if (percentage >= 70) return "👍 Khá!";
+      if (percentage >= 60) return "📚 Trung bình";
+      return "💪 Cần cố gắng thêm!";
+    }
+    
+    function closeResult() {
+      document.getElementById("resultModal").classList.add("hidden");
+    }
+
+    async function saveScore(score, totalQuestions, percentage, timeSpent) {
+      const username = localStorage.getItem('quiz_username');
+      
+      if (!username) {
+        console.log('No username found, score not saved');
+        return;
+      }
+
+      try {
+        const response = await fetch('/save-score', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            username,
+            examId: examData.examId,
+            score,
+            totalQuestions,
+            percentage,
+            timeSpent
+          })
+        });
+
+        if (response.ok) {
+          console.log('Score saved successfully');
+          // Show saved notification
+          const resultModal = document.getElementById("resultModal");
+          const notification = document.createElement('div');
+          notification.className = 'text-xs text-green-600 mt-2';
+          notification.textContent = '✓ Điểm đã được lưu';
+          resultModal.querySelector('.text-center').appendChild(notification);
+        } else {
+          console.error('Failed to save score');
+        }
+      } catch (error) {
+        console.error('Error saving score:', error);
+      }
+    }
+
+    async function toggleStar(btn) {
+      const username = localStorage.getItem('quiz_username');
+      if (!username) {
+        alert('Vui lòng đăng nhập để đánh dấu câu hỏi!');
+        return;
+      }
+
+      const questionIndex = parseInt(btn.getAttribute('data-question-index'));
+      const question = questions[questionIndex];
+      
+      try {
+        const res = await fetch("/star", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question, username })
+        });
+        
+        if (res.ok) {
+          if (btn.textContent === "☆") {
+            btn.textContent = "★";
+            btn.classList.add("text-yellow-500");
+            btn.classList.remove("text-gray-400");
+          } else {
+            btn.textContent = "☆";
+            btn.classList.remove("text-yellow-500");
+            btn.classList.add("text-gray-400");
+          }
+        }
+      } catch (error) {
+        console.error('Error toggling star:', error);
+      }
+    }
+
+    async function unstarQuestion(btn) {
+      const username = localStorage.getItem('quiz_username');
+      if (!username) {
+        alert('Vui lòng đăng nhập!');
+        return;
+      }
+
+      const questionText = btn.getAttribute('data-question-text');
+      
+      if (!confirm('Bạn có chắc muốn bỏ đánh dấu câu hỏi này?')) {
+        return;
+      }
+      
+      try {
+        const res = await fetch("/unstar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ questionText, username })
+        });
+        
+        if (res.ok) {
+          // Tìm và ẩn câu hỏi
+          const questionCard = btn.closest('.question-card');
+          questionCard.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
+          questionCard.style.opacity = '0';
+          questionCard.style.transform = 'translateX(-20px)';
+          
+          setTimeout(() => {
+            questionCard.remove();
+            
+            // Kiểm tra nếu không còn câu hỏi nào
+            const remainingQuestions = document.querySelectorAll('.question-card');
+            if (remainingQuestions.length === 0) {
+              document.querySelector('.max-w-4xl').innerHTML = `
+                <div class="text-center py-12">
+                  <div class="text-6xl mb-4">📚</div>
+                  <h2 class="text-xl font-bold text-gray-600 mb-2">Chưa có câu hỏi đánh dấu</h2>
+                  <p class="text-gray-500 mb-6">Hãy đánh dấu các câu hỏi quan trọng khi làm bài!</p>
+                  <a href="/" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
+                    Về trang chủ
+                  </a>
+                </div>
+              `;
+            }
+          }, 300);
+        } else {
+          alert('Có lỗi xảy ra khi bỏ đánh dấu câu hỏi!');
+        }
+      } catch (error) {
+        console.error('Error unstarring question:', error);
+        alert('Có lỗi xảy ra khi bỏ đánh dấu câu hỏi!');
+      }
+    }
+
+    // Auto-save progress
+    function saveProgress() {
+      const answers = {};
+      questions.forEach((q, i) => {
+        if (q.is_multiple_choice) {
+          const selectedCheckboxes = document.querySelectorAll(`input[name="q${i}"]:checked`);
+          const selectedValues = Array.from(selectedCheckboxes).map(cb => parseInt(cb.value));
+          if (selectedValues.length > 0) {
+            answers[i] = selectedValues;
+          }
+        } else {
+          const selected = document.querySelector(`input[name="q${i}"]:checked`);
+          if (selected) {
+            answers[i] = parseInt(selected.value);
+          }
+        }
+      });
+      localStorage.setItem('quiz_progress', JSON.stringify(answers));
+    }
+
+    // Load saved progress
+    function loadProgress() {
+      const saved = localStorage.getItem('quiz_progress');
+      if (saved) {
+        const answers = JSON.parse(saved);
+        Object.keys(answers).forEach(questionIndex => {
+          const q = questions[questionIndex];
+          if (q && q.is_multiple_choice) {
+            // Multiple choice: check multiple checkboxes
+            const selectedValues = answers[questionIndex];
+            if (Array.isArray(selectedValues)) {
+              selectedValues.forEach(value => {
+                const checkbox = document.querySelector(`input[name="q${questionIndex}"][value="${value}"]`);
+                if (checkbox) {
+                  checkbox.checked = true;
+                }
+              });
+            }
+          } else {
+            // Single choice: check one radio button
+            const radio = document.querySelector(`input[name="q${questionIndex}"][value="${answers[questionIndex]}"]`);
+            if (radio) {
+              radio.checked = true;
+            }
+          }
+        });
+      }
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+      loadProgress();
+      
+      // Add change listeners to save progress
+      document.querySelectorAll('input[type="radio"], input[type="checkbox"]').forEach(input => {
+        input.addEventListener('change', saveProgress);
+      });
+    });
+  </script>
+</body>
+</html>

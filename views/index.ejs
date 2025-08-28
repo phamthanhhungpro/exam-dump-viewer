@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAP Practice Quiz - Luyện thi chứng chỉ</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="64x64" href="https://img.icons8.com/nolan/64/filled-star.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://img.icons8.com/nolan/32/filled-star.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://img.icons8.com/nolan/16/filled-star.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://img.icons8.com/nolan/180/filled-star.png">
+  <meta name="theme-color" content="#667eea">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    .float-animation {
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .slide-up {
+      animation: slideUp 0.6s ease-out;
+    }
+    .gradient-bg {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .card-hover {
+      transition: all 0.3s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    }
+  </style>
+</head>
+<body class="min-h-screen gradient-bg">
+  <!-- Background Pattern -->
+  <div class="absolute inset-0 opacity-10">
+    <div class="absolute inset-0" style="background-image: radial-gradient(circle at 25px 25px, white 2px, transparent 0), radial-gradient(circle at 75px 75px, white 2px, transparent 0); background-size: 100px 100px;"></div>
+  </div>
+  
+  <div class="relative min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-4xl mx-auto">
+      <!-- Header Section -->
+      <div class="text-center mb-12 slide-up">
+        <div class="float-animation inline-block mb-6">
+          <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-lg mx-auto">
+            <span class="text-4xl">📚</span>
+          </div>
+        </div>
+        <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">
+          SAP Practice Quiz
+        </h1>
+        <p class="text-xl text-purple-100 mb-2">Luyện thi chứng chỉ AWS Solutions Architect</p>
+        <div class="flex justify-center items-center space-x-4 text-purple-200">
+          <div class="flex items-center">
+            <span class="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+            <span class="text-sm">529 câu hỏi</span>
+          </div>
+          <div class="flex items-center">
+            <span class="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+            <span class="text-sm">Cập nhật mới nhất</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="bg-white rounded-2xl shadow-2xl p-8 slide-up" style="animation-delay: 0.2s">
+        <!-- User Login Section -->
+        <div class="mb-8 p-6 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-200">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-bold text-emerald-800 mb-2">👤 Thông tin người dùng</h3>
+              <p class="text-sm text-emerald-600" id="userInfo">Chưa đăng nhập</p>
+            </div>
+            <div id="loginForm">
+              <input type="text" id="usernameInput" placeholder="Nhập tên của bạn..." 
+                     class="px-4 py-2 border border-emerald-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 mr-2 text-sm">
+              <button onclick="setUsername()" 
+                      class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                Đăng nhập
+              </button>
+            </div>
+            <div id="logoutForm" class="hidden">
+              <button onclick="logout()" 
+                      class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                Đăng xuất
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div class="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl">
+            <div class="text-3xl font-bold text-blue-600"><%= examsCount %></div>
+            <div class="text-sm text-blue-500 font-medium">Bộ đề thi</div>
+          </div>
+          <div class="text-center p-4 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl">
+            <div class="text-3xl font-bold text-yellow-600"><%= starredCount %></div>
+            <div class="text-sm text-yellow-500 font-medium">Câu đã đánh dấu</div>
+          </div>
+          <div class="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl">
+            <div class="text-3xl font-bold text-green-600">20</div>
+            <div class="text-sm text-green-500 font-medium">Câu hỏi/đề</div>
+          </div>
+        </div>
+
+        <!-- Exam Selection -->
+        <div class="mb-8">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">Chọn bộ đề luyện tập</h2>
+            <div class="text-sm text-gray-500 flex items-center space-x-4">
+              <div class="flex items-center">
+                <span class="inline-block w-3 h-3 bg-blue-500 rounded mr-2"></span>
+                Chưa thi
+              </div>
+              <div class="flex items-center">
+                <span class="inline-block w-3 h-3 bg-red-500 rounded mr-2"></span>
+                Đã thi
+              </div>
+              <div class="flex items-center">
+                <span class="inline-block w-3 h-3 bg-green-500 rounded mr-2"></span>
+                Điểm tuyệt đối
+              </div>
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            <% for (let i = 1; i <= examsCount; i++) { %>
+              <% 
+                const hasScore = examScores[i];
+                let cardClass, iconEmoji;
+                
+                if (!hasScore) {
+                  // Chưa thi - màu xanh dương
+                  cardClass = "card-hover group relative bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl p-4 text-center shadow-lg overflow-hidden";
+                  iconEmoji = "📋";
+                } else if (hasScore.percentage === 100) {
+                  // Điểm tuyệt đối - màu xanh lá
+                  cardClass = "card-hover group relative bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl p-4 text-center shadow-lg overflow-hidden";
+                  iconEmoji = "🏆";
+                } else {
+                  // Đã thi nhưng chưa đạt điểm tuyệt đối - màu đỏ
+                  cardClass = "card-hover group relative bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl p-4 text-center shadow-lg overflow-hidden";
+                  iconEmoji = "📝";
+                }
+              %>
+              <a href="/quiz/<%= i %>" class="<%= cardClass %>">
+                <div class="absolute top-0 right-0 w-8 h-8 bg-white bg-opacity-20 rounded-bl-lg flex items-center justify-center">
+                  <span class="text-xs font-bold"><%= i %></span>
+                </div>
+                <% if (hasScore) { %>
+                  <div class="absolute top-2 left-2 bg-white bg-opacity-20 rounded-full px-2 py-1">
+                    <span class="text-xs font-bold"><%= hasScore.percentage %>%</span>
+                  </div>
+                <% } %>
+                <div class="text-2xl mb-2"><%= iconEmoji %></div>
+                <div class="font-bold text-lg">Đề <%= i %></div>
+                <% if (hasScore) { %>
+                  <div class="text-xs opacity-90">
+                    Điểm: <%= hasScore.score %>/<%= hasScore.totalQuestions %>
+                  </div>
+                <% } else { %>
+                  <div class="text-xs opacity-90">20 câu hỏi</div>
+                <% } %>
+                <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
+              </a>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Starred Questions Section -->
+        <div class="border-t pt-8">
+          <h2 class="text-2xl font-bold text-gray-800 mb-4">Câu hỏi đặc biệt</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <a href="#" onclick="goToStarred()" 
+               class="card-hover group relative bg-gradient-to-br from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white rounded-xl p-6 overflow-hidden">
+              <div class="flex items-center">
+                <div class="flex-shrink-0 mr-4">
+                  <div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                    <span class="text-2xl">⭐</span>
+                  </div>
+                </div>
+                <div>
+                  <div class="font-bold text-lg mb-1">Câu hỏi đã đánh dấu</div>
+                  <div class="text-sm opacity-90">
+                    <span class="font-semibold" id="userStarredCount">0</span> câu hỏi quan trọng
+                  </div>
+                </div>
+              </div>
+              <div class="absolute -right-4 -bottom-4 text-6xl opacity-20">⭐</div>
+            </a>
+            
+            <a href="/scores" 
+               class="card-hover group relative bg-gradient-to-br from-indigo-400 to-indigo-500 hover:from-indigo-500 hover:to-indigo-600 text-white rounded-xl p-6 overflow-hidden">
+              <div class="flex items-center">
+                <div class="flex-shrink-0 mr-4">
+                  <div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                    <span class="text-2xl">📊</span>
+                  </div>
+                </div>
+                <div>
+                  <div class="font-bold text-lg mb-1">Lịch sử điểm</div>
+                  <div class="text-sm opacity-90">Xem kết quả bài thi</div>
+                </div>
+              </div>
+              <div class="absolute -right-4 -bottom-4 text-6xl opacity-20">📊</div>
+            </a>
+          </div>
+        </div>
+
+        <!-- Tips Section -->
+        <div class="mt-8 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6">
+          <h3 class="font-bold text-gray-800 mb-3">💡 Mẹo luyện thi hiệu quả</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+            <div class="flex items-start">
+              <span class="text-green-500 mr-2">✓</span>
+              Đánh dấu câu hỏi khó để ôn lại
+            </div>
+            <div class="flex items-start">
+              <span class="text-green-500 mr-2">✓</span>
+              Làm từ đề dễ đến khó
+            </div>
+            <div class="flex items-start">
+              <span class="text-green-500 mr-2">✓</span>
+              Đọc kỹ đáp án trước khi chọn
+            </div>
+            <div class="flex items-start">
+              <span class="text-green-500 mr-2">✓</span>
+              Luyện tập thường xuyên mỗi ngày
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="text-center mt-8 text-purple-200">
+        <p class="text-sm">© 2025 SAP Practice Quiz - Chúc bạn thi đỗ! 🎉</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Username management
+    function setUsername() {
+      const username = document.getElementById('usernameInput').value.trim();
+      if (username) {
+        localStorage.setItem('quiz_username', username);
+        updateUserDisplay();
+        loadUserExamScores();
+        loadUserStarredCount();
+        document.getElementById('usernameInput').value = '';
+      } else {
+        alert('Vui lòng nhập tên của bạn!');
+      }
+    }
+
+    function updateUserDisplay() {
+      const username = localStorage.getItem('quiz_username');
+      const userInfo = document.getElementById('userInfo');
+      const loginForm = document.getElementById('loginForm');
+      const logoutForm = document.getElementById('logoutForm');
+      
+      if (username) {
+        userInfo.textContent = `Xin chào, ${username}! 👋`;
+        userInfo.className = 'text-sm text-emerald-700 font-medium';
+        loginForm.classList.add('hidden');
+        logoutForm.classList.remove('hidden');
+      } else {
+        userInfo.textContent = 'Chưa đăng nhập';
+        userInfo.className = 'text-sm text-emerald-600';
+        loginForm.classList.remove('hidden');
+        logoutForm.classList.add('hidden');
+      }
+    }
+
+    function logout() {
+      if (confirm('Bạn có chắc muốn đăng xuất?')) {
+        localStorage.removeItem('quiz_username');
+        updateUserDisplay();
+        resetExamCards();
+        resetStarredCount();
+      }
+    }
+
+    // Load điểm số của user hiện tại
+    async function loadUserExamScores() {
+      const username = localStorage.getItem('quiz_username');
+      if (!username) {
+        resetExamCards();
+        return;
+      }
+
+      try {
+        const response = await fetch(`/scores/${encodeURIComponent(username)}`);
+        const userScores = await response.json();
+        
+        // Tạo object chứa điểm cao nhất cho mỗi đề
+        const examScores = {};
+        userScores.forEach(score => {
+          const examId = score.examId;
+          if (!examScores[examId] || score.score > examScores[examId].score) {
+            examScores[examId] = {
+              score: score.score,
+              percentage: score.percentage,
+              totalQuestions: score.totalQuestions
+            };
+          }
+        });
+
+        updateExamCards(examScores);
+      } catch (error) {
+        console.error('Error loading user scores:', error);
+      }
+    }
+
+    // Cập nhật giao diện các thẻ đề thi
+    function updateExamCards(examScores) {
+      const examCards = document.querySelectorAll('[href^="/quiz/"]');
+      
+      examCards.forEach(card => {
+        const examId = parseInt(card.getAttribute('href').split('/')[2]);
+        const hasScore = examScores[examId];
+        
+        if (!hasScore) {
+          // Chưa thi - màu xanh dương
+          card.className = 'card-hover group relative bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl p-4 text-center shadow-lg overflow-hidden';
+          
+          // Reset icon
+          const icon = card.querySelector('.text-2xl');
+          if (icon) icon.textContent = '📋';
+          
+          // Xóa badge phần trăm
+          const percentageBadge = card.querySelector('.percentage-badge');
+          if (percentageBadge) percentageBadge.remove();
+          
+          // Reset thông tin điểm
+          const scoreInfo = card.querySelector('.text-xs.opacity-90');
+          if (scoreInfo) {
+            scoreInfo.textContent = '20 câu hỏi';
+          }
+        } else if (hasScore.percentage === 100) {
+          // Điểm tuyệt đối - màu xanh lá
+          card.className = 'card-hover group relative bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl p-4 text-center shadow-lg overflow-hidden';
+          
+          // Cập nhật icon
+          const icon = card.querySelector('.text-2xl');
+          if (icon) icon.textContent = '🏆';
+          
+          // Thêm badge phần trăm
+          let percentageBadge = card.querySelector('.percentage-badge');
+          if (!percentageBadge) {
+            percentageBadge = document.createElement('div');
+            percentageBadge.className = 'percentage-badge absolute top-2 left-2 bg-white bg-opacity-20 rounded-full px-2 py-1';
+            card.appendChild(percentageBadge);
+          }
+          percentageBadge.innerHTML = `<span class="text-xs font-bold">${hasScore.percentage}%</span>`;
+          
+          // Cập nhật thông tin điểm
+          const scoreInfo = card.querySelector('.text-xs.opacity-90');
+          if (scoreInfo) {
+            scoreInfo.textContent = `Điểm: ${hasScore.score}/${hasScore.totalQuestions}`;
+          }
+        } else {
+          // Đã thi nhưng chưa đạt điểm tuyệt đối - màu đỏ
+          card.className = 'card-hover group relative bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl p-4 text-center shadow-lg overflow-hidden';
+          
+          // Cập nhật icon
+          const icon = card.querySelector('.text-2xl');
+          if (icon) icon.textContent = '�';
+          
+          // Thêm badge phần trăm
+          let percentageBadge = card.querySelector('.percentage-badge');
+          if (!percentageBadge) {
+            percentageBadge = document.createElement('div');
+            percentageBadge.className = 'percentage-badge absolute top-2 left-2 bg-white bg-opacity-20 rounded-full px-2 py-1';
+            card.appendChild(percentageBadge);
+          }
+          percentageBadge.innerHTML = `<span class="text-xs font-bold">${hasScore.percentage}%</span>`;
+          
+          // Cập nhật thông tin điểm
+          const scoreInfo = card.querySelector('.text-xs.opacity-90');
+          if (scoreInfo) {
+            scoreInfo.textContent = `Điểm: ${hasScore.score}/${hasScore.totalQuestions}`;
+          }
+        }
+      });
+    }
+
+    // Reset tất cả thẻ đề thi về trạng thái ban đầu
+    function resetExamCards() {
+      const examCards = document.querySelectorAll('[href^="/quiz/"]');
+      
+      examCards.forEach(card => {
+        // Reset về màu xanh dương
+        card.className = 'card-hover group relative bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl p-4 text-center shadow-lg overflow-hidden';
+        
+        // Reset icon
+        const icon = card.querySelector('.text-2xl');
+        if (icon) icon.textContent = '📋';
+        
+        // Xóa badge phần trăm
+        const percentageBadge = card.querySelector('.percentage-badge');
+        if (percentageBadge) percentageBadge.remove();
+        
+        // Reset thông tin điểm
+        const scoreInfo = card.querySelector('.text-xs.opacity-90');
+        if (scoreInfo) {
+          scoreInfo.textContent = '20 câu hỏi';
+        }
+      });
+    }
+
+    // Load số lượng câu hỏi đã đánh dấu của user
+    async function loadUserStarredCount() {
+      const username = localStorage.getItem('quiz_username');
+      if (!username) {
+        resetStarredCount();
+        return;
+      }
+
+      try {
+        const response = await fetch(`/starred/${encodeURIComponent(username)}/count`);
+        const data = await response.json();
+        document.getElementById('userStarredCount').textContent = data.count;
+      } catch (error) {
+        console.error('Error loading starred count:', error);
+        resetStarredCount();
+      }
+    }
+
+    // Reset số lượng câu hỏi đã đánh dấu
+    function resetStarredCount() {
+      document.getElementById('userStarredCount').textContent = '0';
+    }
+
+    // Điều hướng đến trang câu hỏi đã đánh dấu
+    function goToStarred() {
+      const username = localStorage.getItem('quiz_username');
+      if (!username) {
+        alert('Vui lòng đăng nhập trước khi xem câu hỏi đã đánh dấu!');
+        return;
+      }
+      window.location.href = `/starred?username=${encodeURIComponent(username)}`;
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      updateUserDisplay();
+      loadUserExamScores(); // Load điểm số ngay khi trang được tải
+      loadUserStarredCount(); // Load số lượng câu hỏi đã đánh dấu
+      
+      // Enter key support for username input
+      document.getElementById('usernameInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          setUsername();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
