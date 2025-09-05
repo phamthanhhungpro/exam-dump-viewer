@@ -8,15 +8,50 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 app.set("view engine", "ejs");
 
-const QUESTIONS_FILE = path.join(__dirname, "data/questions.json");
-const STARRED_FILE = path.join(__dirname, "data/starred.json");
-const SCORES_FILE = path.join(__dirname, "data/scores.json");
+// Load exam configuration
+const EXAM_CONFIG_FILE = path.join(__dirname, "config/exams.json");
+let examConfig = {};
+
+function loadExamConfig() {
+  try {
+    examConfig = JSON.parse(fs.readFileSync(EXAM_CONFIG_FILE, "utf8"));
+  } catch (error) {
+    console.error("Error loading exam config:", error);
+    process.exit(1);
+  }
+}
+
+// Initialize exam config
+loadExamConfig();
+
+function getExamFiles(examType) {
+  const exam = examConfig.exams[examType];
+  if (!exam) return null;
+  
+  return {
+    questions: path.join(__dirname, exam.dataFiles.questions),
+    starred: path.join(__dirname, exam.dataFiles.starred),
+    scores: path.join(__dirname, exam.dataFiles.scores)
+  };
+}
 
 function loadJson(file) {
-  if (!fs.existsSync(file)) fs.writeFileSync(file, "[]");
+  if (!fs.existsSync(file)) {
+    // Create directory if it doesn't exist
+    const dir = path.dirname(file);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(file, "[]");
+  }
   return JSON.parse(fs.readFileSync(file, "utf8"));
 }
+
 function saveJson(file, data) {
+  const dir = path.dirname(file);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
   fs.writeFileSync(file, JSON.stringify(data, null, 2));
 }
 
@@ -35,15 +70,49 @@ function normalizeQuestions(rawQuestions) {
   });
 }
 
-
-// Menu chọn đề
+// Homepage - display available exams
 app.get("/", (req, res) => {
-  const questions = loadJson(QUESTIONS_FILE);
-  const starred = loadJson(STARRED_FILE);
-  const scores = loadJson(SCORES_FILE);
+  const availableExams = [];
+  
+  for (const examId of examConfig.settings.enabledExams) {
+    const exam = examConfig.exams[examId];
+    if (exam) {
+      const files = getExamFiles(examId);
+      const questions = loadJson(files.questions);
+      const starred = loadJson(files.starred);
+      
+      const totalStarredCount = starred.reduce((total, entry) => total + entry.questions.length, 0);
+      
+      availableExams.push({
+        ...exam,
+        totalQuestions: questions.length,
+        totalStarred: totalStarredCount,
+        examsCount: Math.ceil(questions.length / exam.questionsPerExam)
+      });
+    }
+  }
+  
+  res.render("home", { 
+    exams: availableExams,
+    config: examConfig.settings 
+  });
+});
 
-  const perTest = 20;
-  const examsCount = Math.ceil(questions.length / perTest);
+// Exam-specific homepage
+app.get("/:examType", (req, res) => {
+  const examType = req.params.examType;
+  const exam = examConfig.exams[examType];
+  
+  if (!exam) {
+    return res.status(404).send("Exam type not found");
+  }
+  
+  const files = getExamFiles(examType);
+  const questions = loadJson(files.questions);
+  const starred = loadJson(files.starred);
+  const scores = loadJson(files.scores);
+
+  const examsCount = Math.ceil(questions.length / exam.questionsPerExam);
 
   // Tạo object chứa điểm cao nhất cho mỗi đề
   const examScores = {};
@@ -62,6 +131,8 @@ app.get("/", (req, res) => {
   const totalStarredCount = starred.reduce((total, entry) => total + entry.questions.length, 0);
 
   res.render("index", { 
+    exam: exam,
+    examType: examType,
     examsCount, 
     starredCount: totalStarredCount,
     examScores: examScores
@@ -69,11 +140,19 @@ app.get("/", (req, res) => {
 });
 
 // Trang làm đề (chia sẵn 20 câu/đề)
-app.get("/quiz/:id", (req, res) => {
-  const raw = loadJson(QUESTIONS_FILE);
+app.get("/:examType/quiz/:id", (req, res) => {
+  const examType = req.params.examType;
+  const exam = examConfig.exams[examType];
+  
+  if (!exam) {
+    return res.status(404).send("Exam type not found");
+  }
+  
+  const files = getExamFiles(examType);
+  const raw = loadJson(files.questions);
   const questions = normalizeQuestions(raw);
 
-  const perTest = 20;
+  const perTest = exam.questionsPerExam;
   const exams = [];
   for (let i = 0; i < questions.length; i += perTest) {
     exams.push(questions.slice(i, i + perTest));
@@ -82,35 +161,73 @@ app.get("/quiz/:id", (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (id < 1 || id > exams.length) return res.send("Đề không tồn tại");
 
-  res.render("quiz", { examId: id, questions: exams[id - 1], isStarredPage: false });
+  res.render("quiz", { 
+    examType: examType,
+    exam: exam,
+    examId: id, 
+    questions: exams[id - 1], 
+    isStarredPage: false 
+  });
 });
 
 // Trang câu hỏi đã đánh dấu - cập nhật để nhận username
-app.get("/starred", (req, res) => {
+app.get("/:examType/starred", (req, res) => {
+  const examType = req.params.examType;
+  const exam = examConfig.exams[examType];
+  
+  if (!exam) {
+    return res.status(404).send("Exam type not found");
+  }
+  
   const username = req.query.username || 'anonymous';
-  const starred = loadJson(STARRED_FILE);
+  const files = getExamFiles(examType);
+  const starred = loadJson(files.starred);
   
   // Tìm câu hỏi đã đánh dấu của user cụ thể
   const userStarred = starred.find(entry => entry.username === username);
   const questions = userStarred ? userStarred.questions : [];
   
-  res.render("quiz", { examId: "⭐", questions: questions, isStarredPage: true });
+  res.render("quiz", { 
+    examType: examType,
+    exam: exam,
+    examId: "⭐", 
+    questions: questions, 
+    isStarredPage: true 
+  });
 });
 
 // Trang lịch sử điểm
-app.get("/scores", (req, res) => {
-  res.render("scores");
+app.get("/:examType/scores", (req, res) => {
+  const examType = req.params.examType;
+  const exam = examConfig.exams[examType];
+  
+  if (!exam) {
+    return res.status(404).send("Exam type not found");
+  }
+  
+  res.render("scores", { 
+    examType: examType,
+    exam: exam 
+  });
 });
 
 // API để bỏ đánh dấu câu hỏi
-app.post("/unstar", (req, res) => {
+app.post("/:examType/unstar", (req, res) => {
+  const examType = req.params.examType;
+  const exam = examConfig.exams[examType];
+  
+  if (!exam) {
+    return res.status(400).json({ error: "Invalid exam type" });
+  }
+  
   const { questionText, username } = req.body;
   
   if (!username) {
     return res.status(400).json({ error: "Username is required" });
   }
   
-  let starred = loadJson(STARRED_FILE);
+  const files = getExamFiles(examType);
+  let starred = loadJson(files.starred);
 
   // Tìm entry của user
   const userIndex = starred.findIndex(entry => entry.username === username);
@@ -125,7 +242,7 @@ app.post("/unstar", (req, res) => {
     }
   }
 
-  saveJson(STARRED_FILE, starred);
+  saveJson(files.starred, starred);
   
   // Đếm số câu hỏi còn lại của user
   const userStarred = starred.find(entry => entry.username === username);
@@ -135,14 +252,22 @@ app.post("/unstar", (req, res) => {
 });
 
 // API để lưu điểm số
-app.post("/save-score", (req, res) => {
+app.post("/:examType/save-score", (req, res) => {
+  const examType = req.params.examType;
+  const exam = examConfig.exams[examType];
+  
+  if (!exam) {
+    return res.status(400).json({ error: "Invalid exam type" });
+  }
+  
   const { username, examId, score, totalQuestions, percentage, timeSpent } = req.body;
   
   if (!username || !examId || score === undefined || !totalQuestions) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
-  let scores = loadJson(SCORES_FILE);
+  const files = getExamFiles(examType);
+  let scores = loadJson(files.scores);
   
   const scoreEntry = {
     username,
@@ -156,15 +281,23 @@ app.post("/save-score", (req, res) => {
   };
 
   scores.push(scoreEntry);
-  saveJson(SCORES_FILE, scores);
+  saveJson(files.scores, scores);
   
   res.json({ success: true, message: "Điểm đã được lưu thành công!" });
 });
 
 // API để lấy lịch sử điểm của user
-app.get("/scores/:username", (req, res) => {
+app.get("/:examType/scores/:username", (req, res) => {
+  const examType = req.params.examType;
+  const exam = examConfig.exams[examType];
+  
+  if (!exam) {
+    return res.status(400).json({ error: "Invalid exam type" });
+  }
+  
   const username = req.params.username;
-  const scores = loadJson(SCORES_FILE);
+  const files = getExamFiles(examType);
+  const scores = loadJson(files.scores);
   
   const userScores = scores
     .filter(score => score.username === username)
@@ -174,9 +307,17 @@ app.get("/scores/:username", (req, res) => {
 });
 
 // API để lấy số lượng câu hỏi đã đánh dấu của user
-app.get("/starred/:username/count", (req, res) => {
+app.get("/:examType/starred/:username/count", (req, res) => {
+  const examType = req.params.examType;
+  const exam = examConfig.exams[examType];
+  
+  if (!exam) {
+    return res.status(400).json({ error: "Invalid exam type" });
+  }
+  
   const username = req.params.username;
-  const starred = loadJson(STARRED_FILE);
+  const files = getExamFiles(examType);
+  const starred = loadJson(files.starred);
   
   const userStarred = starred.find(entry => entry.username === username);
   const count = userStarred ? userStarred.questions.length : 0;
@@ -229,14 +370,22 @@ app.get("/debug/:questionId", (req, res) => {
 });
 
 // API để toggle đánh dấu câu hỏi theo user
-app.post("/star", (req, res) => {
+app.post("/:examType/star", (req, res) => {
+  const examType = req.params.examType;
+  const exam = examConfig.exams[examType];
+  
+  if (!exam) {
+    return res.status(400).json({ error: "Invalid exam type" });
+  }
+  
   const { question, username } = req.body;
   
   if (!username) {
     return res.status(400).json({ error: "Username is required" });
   }
   
-  let starred = loadJson(STARRED_FILE);
+  const files = getExamFiles(examType);
+  let starred = loadJson(files.starred);
 
   // Tìm hoặc tạo entry cho user
   let userIndex = starred.findIndex(entry => entry.username === username);
@@ -266,7 +415,7 @@ app.post("/star", (req, res) => {
     starred[userIndex].questions.push(question);
   }
 
-  saveJson(STARRED_FILE, starred);
+  saveJson(files.starred, starred);
   
   // Đếm số câu hỏi của user hiện tại
   const currentUserEntry = starred.find(entry => entry.username === username);

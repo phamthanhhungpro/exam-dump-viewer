@@ -1,69 +1,74 @@
-# SAP Practice Quiz Application
+# Multi-Exam Practice Quiz Application
 
-A comprehensive web-based quiz application designed for AWS Solutions Architect Professional (SAP-C02) exam preparation. Built with Express.js, EJS templating, and modern responsive design.
+A comprehensive web-based quiz application supporting multiple AWS certification exams. Built with Express.js, EJS templating, and modern responsive design with dynamic routing and configuration-based exam management.
 
 ## 🚀 Features
 
-### 📚 Quiz Management
-- **Multiple Exam Sets**: Automatically divides questions into sets of 20 questions each
-- **Question Types**: Supports both single-choice and multiple-choice questions
-- **Smart Question Parsing**: Advanced PDF parser to extract questions from ExamTopics materials
-- **Progress Tracking**: Auto-save quiz progress in localStorage
+### 📚 Multi-Exam Support
+- **Dynamic Exam Types**: Configure multiple exam types via JSON
+- **Separate Data Storage**: Each exam type has its own questions, scores, and bookmarks
+- **Dynamic Routing**: Clean URLs like `/sap`, `/saa` for different exam types
+- **Centralized Configuration**: Easy to add new exam types through config file
 
-### 👤 User Management
-- **Individual User Accounts**: Track progress and scores per user
-- **Persistent Login**: Username stored in localStorage for convenience
-- **User-Specific Data**: Each user has their own starred questions and score history
+### 🎯 Current Supported Exams
+- **SAP-C02**: AWS Solutions Architect Professional
+- **SAA-C03**: AWS Solutions Architect Associate
+- **Extensible**: Easy to add more exam types
 
-### ⭐ Question Bookmarking
-- **Star Questions**: Bookmark important or difficult questions
-- **User-Specific Bookmarks**: Each user maintains their own starred questions list
-- **Dedicated Starred Page**: Review all bookmarked questions in one place
-- **Quick Toggle**: Easy star/unstar functionality during quiz
+### 👤 User Management (Per Exam Type)
+- **Individual User Accounts**: Track progress separately for each exam type
+- **Persistent Login**: Username stored in localStorage
+- **Exam-Specific Data**: Each user has separate starred questions and scores per exam
 
-### 📊 Score Tracking & Analytics
-- **Comprehensive Scoring**: Track score, percentage, time spent, and timestamp
-- **Score History**: View all previous attempts with detailed statistics
-- **Best Score Tracking**: System remembers highest score for each exam
-- **Performance Analytics**: Visual indicators for exam completion status
+### ⭐ Question Bookmarking (Exam-Specific)
+- **Star Questions**: Bookmark important questions per exam type
+- **User-Specific Bookmarks**: Each user maintains separate starred questions for each exam
+- **Dedicated Starred Page**: Review bookmarked questions per exam type
+
+### 📊 Score Tracking & Analytics (Per Exam)
+- **Comprehensive Scoring**: Track score, percentage, time spent per exam type
+- **Separate Score History**: View attempts history for each exam type
+- **Best Score Tracking**: System remembers highest score for each exam set per exam type
 
 ### 🎨 Smart Visual Indicators
 - **Color-Coded Status**:
   - 🔵 **Blue**: Exam not attempted yet
   - 🔴 **Red**: Attempted but not perfect score
   - 🟢 **Green**: Perfect score (100%)
-- **Progress Badges**: Display percentage scores on completed exams
-- **Achievement Icons**: Special icons for different completion states
-
-### 📱 Responsive Design
-- **Mobile-First**: Optimized for all device sizes
-- **Touch-Friendly**: Large buttons and intuitive touch interactions
-- **Modern UI**: Beautiful gradient backgrounds and smooth animations
-- **Accessibility**: Clear typography and color contrast
+- **Dynamic Exam Colors**: Each exam type can have its own color scheme
 
 ## 🛠️ Technical Stack
 
 - **Backend**: Node.js with Express.js
 - **Frontend**: EJS templating engine
 - **Styling**: TailwindCSS for responsive design
-- **Data Storage**: JSON file-based storage
+- **Data Storage**: JSON file-based storage (organized by exam type)
+- **Configuration**: JSON-based exam configuration
 - **PDF Processing**: Python script with pdfplumber for question extraction
 
 ## 📁 Project Structure
 
 ```
 quizzz/
-├── server.js              # Main Express server
+├── server.js              # Main Express server with multi-exam routing
 ├── package.json           # Node.js dependencies
+├── config/
+│   └── exams.json         # Exam configuration file
 ├── data/
-│   ├── questions.json     # Quiz questions database
-│   ├── starred.json       # User bookmarked questions
-│   └── scores.json        # User score history
+│   ├── sap/               # SAP-C02 exam data
+│   │   ├── questions.json
+│   │   ├── starred.json
+│   │   └── scores.json
+│   └── saa/               # SAA-C03 exam data
+│       ├── questions.json
+│       ├── starred.json
+│       └── scores.json
 ├── views/
-│   ├── index.ejs         # Homepage with exam selection
+│   ├── home.ejs          # Homepage with exam selection
+│   ├── index.ejs         # Exam-specific homepage
 │   ├── quiz.ejs          # Quiz interface
 │   └── scores.ejs        # Score history page
-├── public/               # Static assets (if any)
+├── public/               # Static assets
 └── scripts/
     └── final_parser.py   # PDF question parser
 ```
@@ -101,183 +106,152 @@ quizzz/
 2. **Open your browser**
    Navigate to `http://localhost:4000`
 
-3. **Create a user account**
-   - Click on the login section
-   - Enter your username
-   - Start taking quizzes!
+3. **Choose your exam type**
+   - Go to `http://localhost:4000/sap` for AWS SAP-C02
+   - Go to `http://localhost:4000/saa` for AWS SAA-C03
 
-## 📖 Usage Guide
+## � Adding New Exam Types
 
-### Taking a Quiz
-1. **Login**: Enter your username on the homepage
-2. **Select Exam**: Choose from available exam sets (20 questions each)
-3. **Answer Questions**: Click on options to select answers
-4. **Bookmark**: Use the star (⭐) button to bookmark important questions
-5. **Submit**: Complete the quiz to see your score and save progress
+### 1. Update Configuration
 
-### Viewing Starred Questions
-1. Click on "Câu hỏi đã đánh dấu" (Starred Questions) card
-2. Review all your bookmarked questions
-3. Remove stars by clicking the "Bỏ đánh dấu" button
-
-### Checking Score History
-1. Click on "Lịch sử điểm" (Score History) card
-2. View all your previous attempts
-3. See detailed statistics and performance trends
-
-## 🔧 Adding New Questions
-
-### Using the PDF Parser
-
-1. **Place your PDF file** in the scripts directory
-2. **Run the parser**:
-   ```bash
-   cd scripts
-   python final_parser.py your_exam_file.pdf
-   ```
-3. **The parser will generate** a JSON file with extracted questions
-4. **Copy the questions** to `data/questions.json`
-5. **Restart the server** to load new questions
-
-### Manual Addition
-
-Edit `data/questions.json` directly:
+Edit `config/exams.json`:
 ```json
 {
-  "question": "Your question text here?",
-  "options": ["Option A", "Option B", "Option C", "Option D"],
-  "answer": 0,
-  "is_multiple_choice": false,
-  "source": {
-    "correct_answer": "A",
-    "community_answer": "A",
-    "community_confidence": "high"
+  "exams": {
+    "dva": {
+      "id": "dva",
+      "name": "AWS Developer Associate",
+      "code": "DVA-C01",
+      "description": "AWS Developer Associate Certification",
+      "icon": "💻",
+      "color": {
+        "primary": "purple",
+        "gradient": "from-purple-500 to-purple-600"
+      },
+      "questionsPerExam": 20,
+      "dataFiles": {
+        "questions": "data/dva/questions.json",
+        "starred": "data/dva/starred.json",
+        "scores": "data/dva/scores.json"
+      }
+    }
+  },
+  "settings": {
+    "enabledExams": ["sap", "saa", "dva"]
   }
 }
 ```
+
+### 2. Create Data Directory
+
+```bash
+mkdir data/dva
+echo "[]" > data/dva/questions.json
+echo "[]" > data/dva/starred.json
+echo "[]" > data/dva/scores.json
+```
+
+### 3. Add Questions
+
+Use the PDF parser or manually add questions to the questions.json file.
+
+### 4. Restart Server
+
+The new exam type will be automatically available at `/dva`
 
 ## 🎯 API Endpoints
 
+### Homepage
+- `GET /` - Main homepage with all exam types
+- `GET /:examType` - Exam-specific homepage
+
 ### Quiz Management
-- `GET /` - Homepage with exam selection
-- `GET /quiz/:id` - Take specific exam
-- `GET /starred?username=:username` - View starred questions
+- `GET /:examType/quiz/:id` - Take specific exam set
+- `GET /:examType/starred?username=:username` - View starred questions
 
 ### User Management
-- `GET /scores/:username` - Get user's score history
-- `POST /save-score` - Save quiz results
-- `GET /starred/:username/count` - Get user's starred question count
+- `GET /:examType/scores/:username` - Get user's score history for exam type
+- `POST /:examType/save-score` - Save quiz results for exam type
+- `GET /:examType/starred/:username/count` - Get user's starred question count
 
 ### Question Bookmarking
-- `POST /star` - Toggle question bookmark
-- `POST /unstar` - Remove question bookmark
+- `POST /:examType/star` - Toggle question bookmark for exam type
+- `POST /:examType/unstar` - Remove question bookmark for exam type
+
+## 📊 Configuration Format
+
+### Exam Configuration (`config/exams.json`)
+```json
+{
+  "exams": {
+    "examId": {
+      "id": "examId",
+      "name": "Display Name",
+      "code": "Exam Code",
+      "description": "Description",
+      "icon": "📚",
+      "color": {
+        "primary": "blue",
+        "gradient": "from-blue-500 to-blue-600"
+      },
+      "questionsPerExam": 20,
+      "dataFiles": {
+        "questions": "data/examId/questions.json",
+        "starred": "data/examId/starred.json",
+        "scores": "data/examId/scores.json"
+      }
+    }
+  },
+  "settings": {
+    "defaultExam": "sap",
+    "enabledExams": ["sap", "saa"],
+    "appTitle": "AWS Practice Quiz",
+    "appDescription": "Multi-exam practice platform"
+  }
+}
+```
+
+## 🌐 URL Structure
+
+- `/` - Homepage with exam selection
+- `/:examType` - Exam-specific homepage
+- `/:examType/quiz/:id` - Take quiz
+- `/:examType/starred` - View starred questions
+- `/:examType/scores` - View score history
 
 ## 🎨 Customization
 
+### Adding New Color Schemes
+Update the exam configuration with new Tailwind color classes:
+```json
+"color": {
+  "primary": "emerald",
+  "gradient": "from-emerald-500 to-emerald-600"
+}
+```
+
 ### Changing Questions Per Exam
-Edit the `perTest` variable in `server.js`:
-```javascript
-const perTest = 20; // Change to desired number
-```
-
-### Modifying Color Scheme
-Update the TailwindCSS classes in the EJS templates to change colors and styling.
-
-### Adding New Features
-The modular structure makes it easy to add new routes and functionality to `server.js`.
-
-## 📊 Data Format
-
-### Questions Format
-```json
-{
-  "question": "Question text",
-  "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
-  "answer": 0,
-  "is_multiple_choice": false,
-  "source": {
-    "correct_answer": "A",
-    "community_answer": "A", 
-    "community_confidence": "high"
-  }
-}
-```
-
-### Score Format
-```json
-{
-  "username": "user123",
-  "examId": 1,
-  "score": 18,
-  "totalQuestions": 20,
-  "percentage": 90,
-  "timeSpent": 1200,
-  "timestamp": "2025-08-28T15:43:12.787Z",
-  "date": "28/8/2025"
-}
-```
-
-### Starred Questions Format
-```json
-[
-  {
-    "username": "user123",
-    "questions": [
-      {
-        "question": "Starred question text",
-        "options": ["A", "B", "C", "D"],
-        "answer": 0
-      }
-    ]
-  }
-]
-```
+Modify the `questionsPerExam` value in the exam configuration.
 
 ## 🔒 Security Notes
 
-- This is a **local development application**
-- No password authentication (username only)
-- Data stored in local JSON files
-- Not recommended for production use without additional security measures
+- Local development application
+- Username-only authentication
+- File-based data storage
+- Each exam type has isolated data
 
 ## 🤝 Contributing
 
-Feel free to contribute by:
-- Adding new question sets
-- Improving the UI/UX
+Contribute by:
+- Adding new exam types and questions
+- Improving UI/UX
 - Adding new features
-- Fixing bugs
-- Improving documentation
+- Bug fixes and optimizations
 
 ## 📝 License
 
-This project is for educational purposes. Please ensure you have proper rights to any exam materials you use.
-
-## 🆘 Troubleshooting
-
-### Common Issues
-
-1. **Server won't start**
-   - Check if port 4000 is available
-   - Ensure Node.js is installed correctly
-   - Run `npm install` to install dependencies
-
-2. **Questions not loading**
-   - Check `data/questions.json` exists and has valid JSON
-   - Restart the server after adding new questions
-
-3. **PDF parser not working**
-   - Ensure Python and pdfplumber are installed
-   - Check PDF file path and permissions
-
-4. **Scores not saving**
-   - Check if `data/scores.json` exists and is writable
-   - Ensure user is logged in before taking quiz
-
-### Support
-
-For issues and questions, please check the code comments or create an issue in the project repository.
+Educational use only. Ensure proper rights to exam materials.
 
 ---
 
-**Happy studying! 🎓 Good luck with your AWS SAP-C02 exam! 🚀**
+**Multi-Exam Support! 🚀 Practice for multiple AWS certifications in one place! 🎯**

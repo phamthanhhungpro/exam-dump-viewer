@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quiz <%= examId %></title>
+  <title><%= exam.name %> - Quiz <%= examId %></title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @media (max-width: 640px) {
@@ -274,7 +274,7 @@
       }
 
       try {
-        const response = await fetch('/save-score', {
+        const response = await fetch('/<%= examType %>/save-score', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -316,7 +316,7 @@
       const question = questions[questionIndex];
       
       try {
-        const res = await fetch("/star", {
+        const res = await fetch("/<%= examType %>/star", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ question, username })
@@ -352,7 +352,7 @@
       }
       
       try {
-        const res = await fetch("/unstar", {
+        const res = await fetch("/<%= examType %>/unstar", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ questionText, username })
@@ -376,7 +376,7 @@
                   <div class="text-6xl mb-4">📚</div>
                   <h2 class="text-xl font-bold text-gray-600 mb-2">Chưa có câu hỏi đánh dấu</h2>
                   <p class="text-gray-500 mb-6">Hãy đánh dấu các câu hỏi quan trọng khi làm bài!</p>
-                  <a href="/" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
+                  <a href="/<%= examType %>" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
                     Về trang chủ
                   </a>
                 </div>

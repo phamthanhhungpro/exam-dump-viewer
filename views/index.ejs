@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SAP Practice Quiz - Luyện thi chứng chỉ</title>
+  <title><%= exam.name %> - Practice Quiz</title>
   
   <!-- Favicon -->
   <link rel="icon" type="image/png" sizes="64x64" href="https://img.icons8.com/nolan/64/filled-star.png">
@@ -56,9 +56,12 @@
           </div>
         </div>
         <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">
-          SAP Practice Quiz
+          <%= exam.name %>
         </h1>
-        <p class="text-xl text-purple-100 mb-2">Luyện thi chứng chỉ AWS Solutions Architect</p>
+        <a href="/" class="inline-block mb-4 text-purple-200 hover:text-white transition-colors">
+          ← Back to Homepage
+        </a>
+        <p class="text-xl text-purple-100 mb-2"><%= exam.description %></p>
         <div class="flex justify-center items-center space-x-4 text-purple-200">
           <div class="flex items-center">
             <span class="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
@@ -153,7 +156,7 @@
                   iconEmoji = "📝";
                 }
               %>
-              <a href="/quiz/<%= i %>" class="<%= cardClass %>">
+              <a href="/<%= examType %>/quiz/<%= i %>" class="<%= cardClass %>">
                 <div class="absolute top-0 right-0 w-8 h-8 bg-white bg-opacity-20 rounded-bl-lg flex items-center justify-center">
                   <span class="text-xs font-bold"><%= i %></span>
                 </div>
@@ -199,7 +202,7 @@
               <div class="absolute -right-4 -bottom-4 text-6xl opacity-20">⭐</div>
             </a>
             
-            <a href="/scores" 
+            <a href="/<%= examType %>/scores" 
                class="card-hover group relative bg-gradient-to-br from-indigo-400 to-indigo-500 hover:from-indigo-500 hover:to-indigo-600 text-white rounded-xl p-6 overflow-hidden">
               <div class="flex items-center">
                 <div class="flex-shrink-0 mr-4">
@@ -300,7 +303,7 @@
       }
 
       try {
-        const response = await fetch(`/scores/${encodeURIComponent(username)}`);
+        const response = await fetch(`/<%= examType %>/scores/${encodeURIComponent(username)}`);
         const userScores = await response.json();
         
         // Tạo object chứa điểm cao nhất cho mỗi đề
@@ -428,7 +431,7 @@
       }
 
       try {
-        const response = await fetch(`/starred/${encodeURIComponent(username)}/count`);
+        const response = await fetch(`/<%= examType %>/starred/${encodeURIComponent(username)}/count`);
         const data = await response.json();
         document.getElementById('userStarredCount').textContent = data.count;
       } catch (error) {
@@ -449,7 +452,7 @@
         alert('Vui lòng đăng nhập trước khi xem câu hỏi đã đánh dấu!');
         return;
       }
-      window.location.href = `/starred?username=${encodeURIComponent(username)}`;
+      window.location.href = `/<%= examType %>/starred?username=${encodeURIComponent(username)}`;
     }
 
     // Initialize on page load

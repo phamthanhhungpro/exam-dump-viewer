@@ -1,0 +1,44 @@
+{
+  "exams": {
+    "sap": {
+      "id": "sap",
+      "name": "AWS Solutions Architect Professional",
+      "code": "SAP-C02",
+      "description": "Luyện thi chứng chỉ AWS Solutions Architect Professional",
+      "icon": "🏗️",
+      "color": {
+        "primary": "blue",
+        "gradient": "from-blue-500 to-blue-600"
+      },
+      "questionsPerExam": 20,
+      "dataFiles": {
+        "questions": "data/sap/questions.json",
+        "starred": "data/sap/starred.json",
+        "scores": "data/sap/scores.json"
+      }
+    },
+    "saa": {
+      "id": "saa",
+      "name": "AWS Solutions Architect Associate",
+      "code": "SAA-C03",
+      "description": "Luyện thi chứng chỉ AWS Solutions Architect Associate",
+      "icon": "☁️",
+      "color": {
+        "primary": "green",
+        "gradient": "from-green-500 to-green-600"
+      },
+      "questionsPerExam": 20,
+      "dataFiles": {
+        "questions": "data/saa/questions.json",
+        "starred": "data/saa/starred.json",
+        "scores": "data/saa/scores.json"
+      }
+    }
+  },
+  "settings": {
+    "defaultExam": "sap",
+    "enabledExams": ["sap", "saa"],
+    "appTitle": "AWS Practice Quiz",
+    "appDescription": "Multi-exam practice platform"
+  }
+}
